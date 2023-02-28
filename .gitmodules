@@ -1,0 +1,3 @@
+[submodule "spiceframework"]
+	path = spiceframework
+	url = https://github.com/Astral-C/spiceframework.git
