@@ -4,9 +4,9 @@
 
 typedef struct {
     float y_wave;
-    
-} ghGhostCop;
+    char* current_dialog;
+} ghNPCData;
 
-void ghGhostCopSpawn();
+void ghNPCSpawn(char* config_path);
 
 #endif

@@ -4,6 +4,7 @@
 #include <spice_math.h>
 #include <spice_sprite.h>
 #include <spice_mesh.h>
+#include "ini.h"
 
 typedef enum {
     HAND,
@@ -15,6 +16,7 @@ typedef struct ENT_S {
     uint8_t _inuse;
     uint16_t _id;
     float frame;
+    float radius;
 
     int32_t health;
 
@@ -26,11 +28,13 @@ typedef struct ENT_S {
     sp_vec3 velocity;
     sp_bounding_box hitbox;
 
+
     struct ENT_S* next;
     struct ENT_S* previous;
     struct ENT_S* target;
 
-    void* properties;
+    ini_t* config;
+
     char data[64];
 
     void (*think)(struct ENT_S* self);
@@ -58,7 +62,7 @@ void holoEntityManagerExit();
 
 holo_entity* holoNewEntity();
 
-void holoEntityManagerClick(sp_vec3 camera_position, sp_vec3 ray_dir, CursorMode mode);
+void holoEntityManagerClick(tm_vec3 camera_position, tm_vec3 ray_dir, CursorMode mode, int* hit);
 
 void holoEntityManagerThink();
 

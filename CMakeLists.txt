@@ -7,7 +7,7 @@ project(GhostlyJones)
 
 find_package(SDL2 REQUIRED)
 
-add_definitions(-DSPICE_INPUT_ENABLED)
+add_definitions(-DSPICE_INPUT_ENABLED -DSPICE_GAMESTATE_ENABLED)
 
 include_directories(${SDL2_INCLUDE_DIR} ${SDL2_IMAGE_INCLUDE_DIR} ${SDL2_TTF_INCLUDE_DIR} ${SDL2_MIXER_INCLUDE_DIR} "spiceframework/include" "game/include")
 

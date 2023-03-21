@@ -69,6 +69,10 @@ void holoEntityFree(holo_entity* entity){
         entity->free(entity);
     }
 
+    if(entity->config != NULL){
+        ini_free(entity->config);
+    }
+
     // Free sprite resource
     if(entity->billboard) spicePointSpriteFree(entity->billboard);
     if(entity->mesh) spiceMeshFree(entity->mesh);
@@ -108,14 +112,14 @@ void holoEntityManagerThink(){
 }
 
 
-void holoEntityManagerClick(sp_vec3 camera_position, sp_vec3 ray_dir, CursorMode mode){
+void holoEntityManagerClick(tm_vec3 camera_position, tm_vec3 ray_dir, CursorMode mode, int* hit){
     holo_entity* entity = entity_manager.used_list;
     while(entity != NULL){
         holo_entity* next = entity->next;
 
-        //todo work out position bugs
-        if(spiceSphereCollideRay(camera_position, ray_dir, entity->position, 5.0f) == SP_SUCCESS){
-            spice_info("Hit something at pos %f %f %f!\n", entity->position.x, entity->position.y, entity->position.z);
+        // What? Why?
+        tm_vec3 pos = {entity->position.x, entity->position.y, -entity->position.z};
+        if(spiceSphereCollideRay(camera_position, ray_dir, pos, entity->radius) == SP_SUCCESS){
             switch (mode){
             case LOOK:
                 if(entity->inspect) entity->inspect(entity);
@@ -130,6 +134,7 @@ void holoEntityManagerClick(sp_vec3 camera_position, sp_vec3 ray_dir, CursorMode
             default:
                 break;
             }
+            *hit = 1;
         }
 
         entity = next;

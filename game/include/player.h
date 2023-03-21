@@ -4,6 +4,7 @@
 #include <spice_cam.h>
 
 typedef struct {
+    int cursor_mode;
     float y_wave;
 } ghPlayerData;
 
