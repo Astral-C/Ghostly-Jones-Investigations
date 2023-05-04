@@ -2,6 +2,8 @@
 
 #include <spice_skybox.h>
 #include <spice_mesh.h>
+#include <spice_mixer.h>
+#include <spice_archive.h>
 #include <spice_sprite.h>
 #include <spice_input.h>
 #include <spice_gamestate.h>
@@ -13,6 +15,8 @@
 #include "clue_manager.h"
 #include "ui/textbox.h"
 
+#include "globals.h"
+
 
 //todo wrap this all into a struct
 static int GameInit = 0;
@@ -21,15 +25,36 @@ static tm_orbit_camera* camera;
 static struct nk_context* ctx;
 static sp_input* pause_btn = NULL;
 static int is_paused = 0;
-static int current_pause_menu = 0;
+static int current_pause_menu = 0, fadeout = 0;
+
+static prkArchive* character_sprites = NULL;
 
 static sp_mesh* office = NULL;
 
 static sp_texture *board, *book;
+static sp_clip* sceneMusic = NULL;
 
 int quit = 0;
 
 void ghMainGameCleanup(){
+    prkArchiveClose(character_sprites);
+}
+
+void ghMainGameEnter(){
+    if(!GameInit){
+        ghMainGameInit();
+        GameInit = 1;
+    }
+    if(sceneMusic != NULL){
+        sceneMusic->loop = 1;
+        sceneMusic->playing = 1;
+        sceneMusic->fadein = 1;
+        sceneMusic->fadespeed = 0.03f;
+        sceneMusic->volume = 0.0f;
+    }
+}
+
+void ghMainGameExit(){
 }
 
 void ghMainGameInit(){
@@ -42,9 +67,19 @@ void ghMainGameInit(){
 
     office = spiceMeshLoadCinnamodel("assets/environments/JonesOffice.cnmdl");
 
-    spicePointSpriteSetTexture(0, "assets/characters/jones.png");
-    spicePointSpriteSetTexture(1, "assets/characters/cop.png");
-    spicePointSpriteSetTexture(2, "assets/characters/sunhat.png");
+    character_sprites = prkArchiveOpen("assets/character_sprites.prka");
+
+    if(character_sprites == NULL){
+        spice_error("Couldn't load character sprite archive!");
+    }
+
+    prkArcFile* jones = prkArchiveGetFile(character_sprites, "jones.png");
+    prkArcFile* cop = prkArchiveGetFile(character_sprites, "cop.png");
+    prkArcFile* sunhat = prkArchiveGetFile(character_sprites, "sunhat.png");
+
+    spicePointSpriteSetTextureFromMemory(0, jones->data, jones->size);
+    spicePointSpriteSetTextureFromMemory(1, cop->data, cop->size);
+    spicePointSpriteSetTextureFromMemory(2, sunhat->data, sunhat->size);
     spicePointSpriteSetTexture(3, "assets/items/item.png");
     spicePointSpriteSetTexture(4, "assets/items/camera.png");
 
@@ -62,6 +97,7 @@ void ghMainGameInit(){
 
     char* npcs = ini_get(scenario, "scenario", "npcs");
     char* items = ini_get(scenario, "scenario", "items");
+    char* music = ini_get(scenario, "scenario", "music");
 
     if(npcs != NULL){
         char* npc_config = strtok(npcs, ",");
@@ -79,6 +115,10 @@ void ghMainGameInit(){
         }
     }
 
+    if(music != NULL){
+        sceneMusic = spiceMixerLoadWav(music);
+        sceneMusic->fadespeed = 0.02f;
+    }
 
     ini_free(scenario_settings);
     ini_free(scenario);
@@ -155,6 +195,8 @@ void ghMainGameUpdate(){
 			nk_layout_row_static(ctx, 32, 260, 1);
 			if(nk_button_label(ctx, "Quit")){
 				spiceGamestateChange(0, 1);
+                sceneMusic->fadein = 0;
+                sceneMusic->fadeout = 1;
 			}
 			nk_end(ctx);
 
@@ -206,6 +248,8 @@ void ghMainGameUpdate(){
         }
 
         if(e.type == SDL_MOUSEBUTTONDOWN){
+            clickSfx->playing = 1;
+
             int mx, my;
             tm_vec3 ray_dir;
             SDL_GetMouseState(&mx, &my);

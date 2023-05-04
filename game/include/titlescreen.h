@@ -4,4 +4,7 @@
 void ghTitlescreenDraw();
 void ghTitlescreeUpdate();
 
+void ghTitlescreenEnter();
+void ghTitlescreenExit();
+
 #endif

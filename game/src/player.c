@@ -1,9 +1,12 @@
 #include <spice_input.h>
+#include <spice_mixer.h>
 #include "player.h"
 #include "ui/textbox.h"
 
 static sp_input *left, *right, *forward, *back, *cursor;
 static struct nk_context* ctx;
+static sp_clip* bonk = NULL;
+
 
 void ghPlayerThink(holo_entity* self){
     ghPlayerData* data = (ghPlayerData*)self->data;
@@ -35,14 +38,22 @@ void ghPlayerThink(holo_entity* self){
 
     if(self->position.x + self->velocity.x > 19){
         self->velocity.x = 0;
+        bonk->playing = 1;
+        bonk->sample_offset = 60;
     } else if(self->position.x + self->velocity.x < -19){
         self->velocity.x = 0;
+        bonk->playing = 1;
+        bonk->sample_offset = 60;
     }
 
     if(self->position.z + self->velocity.z > 15){
         self->velocity.z = 0;
+        bonk->playing = 1;
+        bonk->sample_offset = 60;
     } else if(self->position.z + self->velocity.z < -15){
         self->velocity.z = 0;
+        bonk->playing = 1;
+        bonk->sample_offset = 60;
     }
 
     if(cursor->state == SP_INPUT_PRESSED){
@@ -113,6 +124,12 @@ holo_entity* ghPlayerSpawn(){
 
     ghPlayerData* data = (ghPlayerData*)self->data;
     data->y_wave = rand() % 100;
+
+    if(bonk == NULL){
+        bonk = spiceMixerLoadWav("assets/bonk.wav");
+        bonk->volume = 1.2f;
+        bonk->pitch = 0.5f;
+    }
 
     return self;
 }

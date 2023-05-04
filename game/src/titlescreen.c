@@ -1,14 +1,36 @@
 #include <spice_graphics.h>
 #include <spice_gamestate.h>
 #include <spice_sprite.h>
+#include <spice_mixer.h>
 #include <spice_cam.h>
 
 #include "titlescreen.h"
 #include "gamestates.h"
 #include "game.h"
 
+#include "globals.h"
+
 static struct nk_context* ctx = NULL;
 static sp_texture* titlecard = NULL;
+static sp_clip* titlescreenMusic = NULL;
+static int init = 0, fadeout = 0;
+
+void ghTitlescreenEnter(){
+    if(ctx == NULL) ctx = spiceGetNuklearContext();
+	if(titlecard == NULL) titlecard = spiceTexture2DLoad("assets/ui/titlecard.png");
+	if(titlescreenMusic == NULL) titlescreenMusic = spiceMixerLoadWav("assets/titlescreen.wav");
+
+	titlescreenMusic->loop = 1;
+	titlescreenMusic->playing = 1;
+	titlescreenMusic->volume = 0.0f;
+	titlescreenMusic->fadein = 1;
+	titlescreenMusic->fadespeed = 0.03f;
+}
+
+void ghTitlescreenExit(){
+}
+
+
 
 void ghTitlescreenDraw(){
 
@@ -28,6 +50,8 @@ void ghTitlescreenDraw(){
 	nk_layout_row_dynamic(ctx, 32, 1);
 	if(nk_button_label(ctx, "Start")){
 		spiceGamestateChange(GH_GAMESTATE_MAIN, 1);
+		titlescreenMusic->fadein = 0;
+		titlescreenMusic->fadeout = 1;
 	}
 		
     if(nk_button_label(ctx, "Quit")){
@@ -43,14 +67,15 @@ void ghTitlescreenDraw(){
 }
 
 void ghTitlescreeUpdate(){
-    if(ctx == NULL) ctx = spiceGetNuklearContext();
-	if(titlecard == NULL) titlecard = spiceTexture2DLoad("assets/ui/titlecard.png");
     nk_input_begin(ctx);
 
     spiceInputUpdate();
 
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
+        if(e.type == SDL_MOUSEBUTTONDOWN){
+            clickSfx->playing = 1;
+		}
         nk_sdl_handle_event(&e);
 
     }

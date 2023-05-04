@@ -6,4 +6,7 @@ extern int quit;
 void ghMainGameUpdate();
 void ghMainGameDraw();
 
+void ghMainGameEnter();
+void ghMainGameExit();
+
 #endif

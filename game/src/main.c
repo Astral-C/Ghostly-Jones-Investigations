@@ -2,16 +2,19 @@
 #include <spice_gamestate.h>
 #include <spice_input.h>
 #include <spice_skybox.h>
+#include <spice_mixer.h>
 #include <time.h>
 #include "player.h"
 #include "interactable/npc.h"
 #include "game.h"
 #include "titlescreen.h"
 #include "gamestates.h"
+#include "globals.h"
+
+sp_clip* clickSfx;
 
 void transition_fade(uint64_t cur_time, uint64_t total_time, sp_gamestate* previous, sp_gamestate* next){
 	struct nk_context* ctx = spiceGetNuklearContext();
-
 
     if(cur_time <= 255){
         nk_style_push_color(ctx, &ctx->style.window.background, nk_rgba(0,0,0,cur_time));
@@ -28,6 +31,7 @@ void transition_fade(uint64_t cur_time, uint64_t total_time, sp_gamestate* previ
 	nk_style_pop_style_item(ctx);
 	nk_style_pop_color(ctx);
 
+    next->enter();
     if(cur_time <= 255){
         previous->update();
         previous->draw();
@@ -35,6 +39,7 @@ void transition_fade(uint64_t cur_time, uint64_t total_time, sp_gamestate* previ
         next->update();
         next->draw();
     }
+    previous->exit();
 
 }
 
@@ -43,6 +48,13 @@ int main(int argc, char* argv[]){
 
     spiceGraphicsInit("Ghostly Jones Investigations", 1280, 720, 120, 0);
     spiceInputInit("assets/input.cfg");
+
+    spiceMixerInit(10);
+
+    clickSfx = spiceMixerLoadWav("assets/click.wav");
+    clickSfx->volume = 1.0f;
+    clickSfx->loop = 0;
+    clickSfx->playing = 0;
 
     SDL_ShowCursor(0);
 
@@ -53,8 +65,8 @@ int main(int argc, char* argv[]){
     //spiceSpriteInit(50);
 
     spiceGamestateInit(2);
-    spiceGamestateRegister(GH_GAMESTATE_TITLESCREEN, ghTitlescreeUpdate, ghTitlescreenDraw);
-    spiceGamestateRegister(GH_GAMESTATE_MAIN, ghMainGameUpdate, ghMainGameDraw);
+    spiceGamestateRegister(GH_GAMESTATE_TITLESCREEN, ghTitlescreeUpdate, ghTitlescreenDraw, ghTitlescreenEnter, ghTitlescreenExit);
+    spiceGamestateRegister(GH_GAMESTATE_MAIN, ghMainGameUpdate, ghMainGameDraw, ghMainGameEnter, ghMainGameExit);
     spiceGamestateChange(GH_GAMESTATE_TITLESCREEN, 0);
 
     spiceGamestateSetTransitionFunc(transition_fade);
@@ -92,7 +104,8 @@ int main(int argc, char* argv[]){
     nk_style_load_cursor(ctx, NK_CURSOR_MOVE, &eyecursor);
     nk_style_load_cursor(ctx, NK_CURSOR_RESIZE_HORIZONTAL, &talkcursor);
 
-    
+    spiceMixerPause(0);
+
     quit = 0;
     while(!quit){
 
@@ -101,7 +114,6 @@ int main(int argc, char* argv[]){
         spiceGamestateUpdate();
 
         nk_sdl_render(NK_ANTI_ALIASING_ON, 512 * 1024, 512 * 1024);
-
 
         spiceGraphicsDraw();
         spiceGraphicsStep();
